@@ -1,0 +1,118 @@
+@echo OFF
+chcp 1250
+
+REM *****************************
+REM ******SEKCJA POWITALNA*******
+REM *****************************
+
+echo [*************************************************************]
+echo [*************************************************************]
+echo [*************************************************************]
+echo [***]    _            _         _       _                 [***] 
+echo [***]   ^(_)_ __  ___ ^| ^|_  ___ ^| ^| ___ ^| ^|_  ___  _ _     [***] 
+echo [***]   ^| ^| '_ \/ __^|^| __^|/ _ '^| ^|/ _ '^| __^|/   \^| '_^|    [***] 
+echo [***]   ^| ^| ^| ^| \__ \^| ^|_^| (_) ^| ^| (_) ^| ^|_^| (_) ^| ^|      [***] 
+echo [***]   ^|_^|_^| ^|_^|___/^ \__^|\__,_^|_^|\__,_^|\__^|\___/^|_^|      [***]
+echo [***]                                                     [***]
+echo [*************************************************************]
+echo [*************************************************************]
+echo [***]                                                     [***]
+echo [***] Uruchom instalator zaraz po zainstalowaniu systemu. [***]
+echo [***] Uruchom go na koncie Administratora domeny.         [***]
+echo [***]                                                     [***]
+echo [*************************************************************]
+echo [*********************** Dawid Wilusz, Filip Przybylski, Micha³ Przêczek ************************]
+echo [***********************  v.1.32  ************************]
+echo [*************************************************************]
+echo [***]
+
+REM *****************************
+REM *******SEKCJA USTAWIEN*******
+REM *****************************
+
+:start
+
+:useroff
+echo [****] Zmieniam haslo dla "janusz".
+net user janusz moczywas
+
+echo [****] Wylaczylem konto o nazwie "janusz".
+echo [****] Jezeli inaczej nazwales konto przy instalacji edytuj ten plik!
+net user janusz /active:no
+
+REM Zmienia haslo w koncie Administrator
+echo [****] Zmieniam haslo Administratora.
+net user Administrator moczywas
+
+:adminset
+REM Wlacza konto o nazwie Administrator
+echo [****] Wlaczam konto Administratora.
+net user Administrator /active:yes
+
+
+REM *****************************
+REM ******SEKCJA INSTALACJI******
+REM *****************************
+
+echo [Info] Rozpoczynam instalacje programow!
+cd X:\
+
+REM *******Nadzor*******
+echo [Info] Instaluje Nadzor...
+instalki\Agent
+
+REM ********Eset*******
+echo [Info] Instaluje ESET Endpoint Antivirus...
+instalki\ERA_Installer_x64_pl_PL.exe --silent --accepteula --avr-disable
+
+REM *********Web**********
+echo [Info] Instaluje Web...
+instalki\InstallerWeb_Installer.exe
+
+REM **********VNC***********
+echo [Info] Instaluje VNC...
+msiexec /i "instalki\vnc-2.10-setup.msi" /quiet /norestart SET_USEVNCAUTHENTICATION=1 VALUE_OF_USEVNCAUTHENTICATION=1 SET_PASSWORD=1 VALUE_OF_PASSWORD=moczywas SET_USECONTROLAUTHENTICATION=1 VALUE_OF_USECONTROLAUTHENTICATION=1 SET_CONTROLPASSWORD=1 VALUE_OF_CONTROLPASSWORD=moczywas
+
+REM ***********Java32************
+echo [Info] Instaluje Java x32...
+instalki\jre-8u172-windows-i586.exe /s
+
+REM ***********Java64************
+echo [Info] Instaluje Java x64...
+instalki\jre-8u172-windows-x64.exe /s
+
+REM *******MozillaFirefox********
+echo [Info] Instaluje Mozilla Firefox...
+instalki\Firefox_Setup.exe -ms
+
+REM ********AdobeReader**********
+REM echo [Info] Instaluje Adobe Reader...
+REM instalki\AdbeRdr_PL.exe /sAll
+
+REM *****************************
+REM *******SEKCJA USTAWIEN*******
+REM *****************************
+
+echo [Info] Zmieniam uprawnienia folderu C:\Program Files\Nadzor
+icacls "C:\Program Files\Nadzor" /grant:r "U¿ytkownicy":(OI)(CI)F
+
+echo [Info] Zmieniam uprawnienia dla Nadzor w Firewall
+netsh advfirewall firewall add rule name=\"Nadzor\" dir=\"in\" action=\"allow\" program=\"C:\Program Files\Nadzor\hpdsr.exe\" enable=\"yes\"
+
+echo [Info] Wylaczam Zapore Systemu Windows...
+netsh advfirewall set allprofiles state off
+
+
+echo [Info] Aktualizuje Polityki GPO...
+cd/
+c: 
+gpupdate /force 
+
+echo [*************************************************************]
+echo [***]                                                     [***]
+echo [***] System zostanie automatycznie uruchomiony ponownie. [***]
+echo [***]                                                     [***]
+echo [*************************************************************]
+
+shutdown /s /t 0
+:end
